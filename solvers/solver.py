@@ -108,7 +108,7 @@ def process_options(solving):
 class Logger:
     def __init__(self, prefix_end="", verbose=0, path=None):
         mac, pid = hex(uuid.getnode()), str(os.getpid())
-        filename = "solver_" + mac + "_" + pid + "_" + (str(prefix_end) if prefix_end else "") + ".log"
+        self.filename = "solver_" + mac + "_" + pid + "_" + (str(prefix_end) if prefix_end else "") + ".log"
         self.log_file = (path if path else os.getcwd()) + os.sep + filename
         # self.log_file = os.path.dirname(os.path.realpath(__file__)) + os.sep + filename  # old code
         if verbose > 0:
@@ -131,6 +131,8 @@ class Logger:
     def close(self):
         self.log.close()
 
+    def get_filename(self):
+        return self.filename
 
 class Instantiation:
     def __init__(self, root, variables, values, pretty_solution):
@@ -305,7 +307,7 @@ class SolverProcess:
                 stopped = True
                 os.killpg(os.getpgid(p.pid), signal.SIGINT)
 
-            signal.signal(signal.SIGINT, new_handler)
+            #signal.signal(signal.SIGINT, new_handler)
             end_prefix = self.log_filename_suffix if self.log_filename_suffix is not None else str(self.n_executions)
             log = Logger(end_prefix, verbose, Compilation.pathname)  # To record the output of the solver
             self.last_log = log.log_file
@@ -316,8 +318,8 @@ class SolverProcess:
             p.wait()
             p.terminate()
             log.close()
-            signal.signal(signal.SIGINT, handler)  # Reset the right SIGINT
-            return log.read(), stopped
+            #signal.signal(signal.SIGINT, handler)  # Reset the right SIGINT
+            return log.read(), stopped, log.filename
 
         if model is not None and len(VarEntities.items) == 0:
             print("\n The instance has no variable, so the solver is not run.")
@@ -347,7 +349,7 @@ class SolverProcess:
         if verbose > 0:
             print("\n  * Solving by " + self.name + " in progress ... ")
             print("    - command:", command)
-        out_err, stopped = execute(command)
+        out_err, stopped, filename = execute(command)
 
         missing = out_err is not None and out_err.find("Missing Implementation") != -1
         self.last_command_wck = stopwatch.elapsed_time()
@@ -363,13 +365,13 @@ class SolverProcess:
             else:
                 print()
         self.n_executions += 1
-        return extract_result_and_solution(out_err) if out_err else TypeStatus.UNKNOWN
+        return extract_result_and_solution(out_err) if out_err else TypeStatus.UNKNOWN, filename
 
     def solve(self, instance, string_options="", dict_options=None, dict_simplified_options=None, compiler=False, *, verbose=0, automatic=False,
               extraction=False):
-        self.status = self._solve(instance, string_options, dict_options, dict_simplified_options, compiler, verbose=verbose, automatic=automatic,
+        self.status, filename = self._solve(instance, string_options, dict_options, dict_simplified_options, compiler, verbose=verbose, automatic=automatic,
                                   extraction=extraction)
-        return self.status
+        return self.status, filename
 
     def switch_to_extraction(self):
         pass
