@@ -109,7 +109,7 @@ class Logger:
     def __init__(self, prefix_end="", verbose=0, path=None):
         mac, pid = hex(uuid.getnode()), str(os.getpid())
         self.filename = "solver_" + mac + "_" + pid + "_" + (str(prefix_end) if prefix_end else "") + ".log"
-        self.log_file = (path if path else os.getcwd()) + os.sep + filename
+        self.log_file = (path if path else os.getcwd()) + os.sep + self.filename
         # self.log_file = os.path.dirname(os.path.realpath(__file__)) + os.sep + filename  # old code
         if verbose > 0:
             print("    - logfile:", self.log_file)
