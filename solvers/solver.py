@@ -117,6 +117,8 @@ class Logger:
             os.remove(self.log_file)
         self.log = open(self.log_file, "a")
 
+        os.chmod(self.log_file, 0o666)
+
     def write(self, message):
         self.log = open(self.log_file, "a")
         self.log.write(message)
